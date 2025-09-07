@@ -1,12 +1,21 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import '../../constants/colors.dart';
+import '../../services/chat_service.dart';
+import '../../widgets/message_input.dart';
+import '../../widgets/message_list.dart';
 
 class ChatMessagesPage extends StatefulWidget {
   final String chatId;
   final String otherUserId;
+  final String otherUserDisplayName;
 
-  const ChatMessagesPage({super.key, required this.chatId, required this.otherUserId});
+  const ChatMessagesPage({
+    super.key,
+    required this.chatId,
+    required this.otherUserId,
+    required this.otherUserDisplayName,
+  });
 
   @override
   State<ChatMessagesPage> createState() => _ChatMessagesPageState();
@@ -16,102 +25,104 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
   final TextEditingController _messageController = TextEditingController();
   final currentUser = FirebaseAuth.instance.currentUser;
 
-  void sendMessage() async {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+  Map<String, Map<String, String>> _userProfiles = {};
 
-    final messagesRef = FirebaseFirestore.instance
-        .collection('chats')
-        .doc(widget.chatId)
-        .collection('messages');
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfiles();
+  }
 
-    await messagesRef.add({
-      'senderId': currentUser!.uid,
-      'text': text,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+  Future<void> _loadUserProfiles() async {
+    try {
+      final profiles = await ChatService.getUserProfiles([currentUser!.uid, widget.otherUserId]);
+      setState(() {
+        for (var doc in profiles) {
+          final data = doc.data() as Map<String, dynamic>;
+          _userProfiles[doc.id] = {
+            'profilePic': data['profilePic'] ?? '',
+            'gender': data['gender'] ?? 'male',
+          };
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading profiles: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 
-    // Update last message and timestamp in chat doc
-    await FirebaseFirestore.instance.collection('chats').doc(widget.chatId).update({
-      'lastMessage': text,
-      'lastUpdated': FieldValue.serverTimestamp(),
-    });
-
-    _messageController.clear();
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final messagesRef = FirebaseFirestore.instance
-        .collection('chats')
-        .doc(widget.chatId)
-        .collection('messages')
-        .orderBy('timestamp', descending: false);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chat with ${widget.otherUserId}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-        centerTitle: true,
+        title: Text(widget.otherUserDisplayName),
       ),
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: messagesRef.snapshots(),
+            child: StreamBuilder(
+              stream: ChatService.getMessages(widget.chatId),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator(color: Colors.green));
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
+                  );
                 }
 
-                final messages = snapshot.data!.docs;
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = messages[index].data() as Map<String, dynamic>;
-                    final isMe = msg['senderId'] == currentUser!.uid;
-
-                    return Align(
-                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isMe ? Colors.green.withOpacity(0.8) : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          msg['text'] ?? '',
-                          style: TextStyle(color: isMe ? Colors.white : Colors.black),
-                        ),
-                      ),
-                    );
-                  },
+                final messages = snapshot.data?.docs ?? [];
+                
+                // Sort messages in the correct order for display
+                final reversedMessages = messages.reversed.toList();
+                
+                return MessageList(
+                  messages: reversedMessages,
+                  userProfiles: _userProfiles,
                 );
               },
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            color: Colors.white,
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: 'Type a message...',
-                      border: InputBorder.none,
+          MessageInput(
+            controller: _messageController,
+            onSend: () async {
+              final text = _messageController.text.trim();
+              if (text.isEmpty) return;
+
+              try {
+                await ChatService.sendMessage(
+                  chatId: widget.chatId,
+                  otherUserId: widget.otherUserId,
+                  text: text,
+                );
+                _messageController.clear();
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error sending message: $e'),
+                      backgroundColor: AppColors.error,
                     ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Colors.green),
-                  onPressed: sendMessage,
-                ),
-              ],
-            ),
+                  );
+                }
+              }
+            },
           ),
         ],
       ),

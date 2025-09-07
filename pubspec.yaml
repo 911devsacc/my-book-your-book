@@ -1,3 +1,9 @@
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/images/app-logo.png
+  android: true
+  ios: true
+  web: true
 name: my_book_your_book
 description: "A new Flutter project."
 publish_to: 'none'
@@ -13,12 +19,25 @@ dependencies:
   firebase_auth: ^5.0.0
   cloud_firestore: ^5.0.0
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.0
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app-logo.png"
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true
   assets:
     - assets/app-logo.png
+    - assets/images/female_pfp.png
+    - assets/images/male_pfp.png
+
+# To set the app icon, use the flutter_launcher_icons package or manually replace the platform icons with assets/images/app-logo.png

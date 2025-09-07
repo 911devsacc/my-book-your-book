@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:my_book_your_book/main_screen.dart';
 
 class RulesPage extends StatelessWidget {
   const RulesPage({super.key});
@@ -33,11 +32,9 @@ class RulesPage extends StatelessWidget {
                     TextButton(
                       onPressed: () async {
                         await FirebaseAuth.instance.signOut();
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const MainScreen()),
-                        );
+                        if (context.mounted) {
+                          Navigator.of(context).popUntil((route) => route.isFirst);
+                        }
                       },
                       child: const Text("Logout"),
                     ),
@@ -70,18 +67,18 @@ class RulesPage extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Row(
                         children: [
-                          Icon(Icons.location_on, color: Colors.green),
-                          SizedBox(width: 8),
-                          Text('1. Meet in Public Places',
+                          const Icon(Icons.location_on, color: Colors.green),
+                          const SizedBox(width: 8),
+                          const Text('1. Meet in Public Places',
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold)),
                         ],
                       ),
-                      SizedBox(height: 6),
-                      Text(
+                      const SizedBox(height: 6),
+                      const Text(
                         'For your safety, always arrange to meet in well-lit, public locations on or near campus.',
                       ),
                     ],

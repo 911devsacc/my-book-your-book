@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:my_book_your_book/pages/auth/validators.dart';
 import 'package:my_book_your_book/widgets/custom_textfield.dart';
 
 class LoginPage extends StatefulWidget {
@@ -13,10 +14,20 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() => _isLoading = true);
     try {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
@@ -30,134 +41,131 @@ class _LoginPageState extends State<LoginPage> {
       final user = userCredential.user;
 
       if (user != null && !user.emailVerified) {
-        await FirebaseAuth.instance.signOut();
-
-        // New pop-up dialog with resend button
-        await showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Account Not Verified'),
-            content: const Text(
-              'Your email address has not been verified. Please check your email for a verification link.',
+        await _showDialog(
+          title: 'Account Not Verified',
+          content:
+              'Your email is not verified. Please check your email for a verification link.',
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _resendVerificationEmail(user);
+              },
+              child: const Text('Resend link'),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop(); // Close the dialog
-                  _resendVerificationEmail(); // Call the resend function
-                },
-                child: const Text('Resend link'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop(); // Close the dialog
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
         );
+        await FirebaseAuth.instance.signOut();
         return;
       }
 
-      print('User logged in: ${user?.uid}');
     } on FirebaseAuthException catch (e) {
-      String message;
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'No user found for that email.';
-          break;
-        case 'wrong-password':
-          message = 'Wrong password provided.';
-          break;
-        default:
-          message = 'An error occurred. Try again.';
-      }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Something went wrong.')),
-      );
+      _showSnackBar(_mapFirebaseError(e));
+    } catch (_) {
+      _showSnackBar('Something went wrong. Try again.');
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
-  
-  // New function to resend the verification email
-  Future<void> _resendVerificationEmail() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        await user.sendEmailVerification();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('A new verification email has been sent!'),
-          ),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to send verification email. Try again later.'),
-          ),
-        );
-      }
+
+  Future<void> _resendVerificationEmail(User user) async {
+    try {
+      await user.sendEmailVerification();
+      _showSnackBar('Verification email sent!');
+    } catch (_) {
+      _showSnackBar('Failed to send verification email.');
     }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _mapFirebaseError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'user-not-found':
+        return 'No user found for that email.';
+      case 'wrong-password':
+        return 'Wrong password provided.';
+      default:
+        return 'An error occurred. Try again.';
+    }
+  }
+
+  Future<void> _showDialog({
+    required String title,
+    required String content,
+    required List<Widget> actions,
+  }) {
+    return showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: actions,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Image.asset('assets/app-logo.png', width: 250),
-              const SizedBox(height: 8),
-              const Text(
-                'Welcome back!',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(12),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            Image.asset('assets/app-logo.png', width: 250),
+            const SizedBox(height: 12),
+            const Text(
+              'Welcome back!',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
+            ),
+            const SizedBox(height: 24),
+            CustomTextField(
+              controller: _emailController,
+              labelText: 'Email',
+              validator: Validators.email,
+            ),
+            const SizedBox(height: 12),
+            CustomTextField(
+              controller: _passwordController,
+              labelText: 'Password',
+              isPassword: _obscurePassword,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
-              const SizedBox(height: 12),
-              CustomTextField(
-                controller: _emailController,
-                labelText: 'Email',
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter email';
-                  if (!value.endsWith('@st.aabu.edu.jo')) return 'Use university email';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              CustomTextField(
-                controller: _passwordController,
-                labelText: 'Password',
-                isPassword: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter password';
-                  if (value.length < 6) return 'Min 6 chars';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              GestureDetector(
-                onTap: _login,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 18, 167, 4),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Login',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+              validator: Validators.password,
+            ),
+            const SizedBox(height: 24),
+            _isLoading
+                ? const CircularProgressIndicator()
+                : GestureDetector(
+                    onTap: _login,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Login',
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );
