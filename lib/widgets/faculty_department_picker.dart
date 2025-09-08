@@ -38,7 +38,7 @@ class _FacultyDepartmentPickerState extends State<FacultyDepartmentPicker> {
       children: [
         // Faculty Dropdown
         DropdownButtonFormField<String>(
-          value: _selectedFaculty,
+          initialValue: _selectedFaculty,
           decoration: InputDecoration(
             labelText: 'Faculty',
             border: OutlineInputBorder(
@@ -81,7 +81,7 @@ class _FacultyDepartmentPickerState extends State<FacultyDepartmentPicker> {
         // Department Dropdown
         if (_selectedFaculty != null)
           DropdownButtonFormField<String>(
-            value: _selectedDepartment,
+            initialValue: _selectedDepartment,
             decoration: InputDecoration(
               labelText: 'Department',
               border: OutlineInputBorder(

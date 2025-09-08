@@ -1,7 +1,7 @@
+import 'package:my_book_your_book/pages/inside/chat_message_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:my_book_your_book/pages/inside/chat_message_page.dart';
 
 class ChatPage extends StatelessWidget {
   const ChatPage({super.key});
@@ -94,7 +94,7 @@ class ChatPage extends StatelessWidget {
               final chat = chats[index].data() as Map<String, dynamic>;
               
               // Safety check for participants
-              if (chat['participants'] == null || !(chat['participants'] is List) || (chat['participants'] as List).isEmpty) {
+              if (chat['participants'] == null || chat['participants'] is! List || (chat['participants'] as List).isEmpty) {
                 print('Invalid chat document ${chats[index].id}: Missing or invalid participants');
                 return const SizedBox(); // Skip invalid chats
               }
@@ -123,8 +123,8 @@ class ChatPage extends StatelessWidget {
                     .get(),
                 builder: (context, userSnapshot) {
                   Widget leading = const CircleAvatar(
-                    child: Icon(Icons.person),
                     backgroundColor: Colors.grey,
+                    child: Icon(Icons.person),
                   );
                   String displayName = 'Deleted User';
                   bool userExists = false;

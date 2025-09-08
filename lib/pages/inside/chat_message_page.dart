@@ -25,7 +25,7 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
   final TextEditingController _messageController = TextEditingController();
   final currentUser = FirebaseAuth.instance.currentUser;
 
-  Map<String, Map<String, String>> _userProfiles = {};
+  final Map<String, Map<String, String>> _userProfiles = {};
 
   @override
   void initState() {

@@ -1,8 +1,9 @@
+import 'package:my_book_your_book/pages/auth/validators.dart';
+import 'package:my_book_your_book/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:my_book_your_book/pages/auth/validators.dart';
-import 'package:my_book_your_book/widgets/custom_textfield.dart';
+
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -131,7 +132,7 @@ class _SignupPageState extends State<SignupPage> {
             Image.asset('assets/app-logo.png', width: 250),
             const SizedBox(height: 12),
             const Text(
-              'MY BOOK YOUR BOOK!',
+              'My Book Your Book!',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
             ),
             const SizedBox(height: 24),
@@ -139,6 +140,16 @@ class _SignupPageState extends State<SignupPage> {
               controller: _emailController,
               labelText: 'Email',
               validator: Validators.email,
+              showDomainButton: true,
+              onDomainPressed: () {
+                final currentText = _emailController.text.trim();
+                if (!currentText.endsWith('@st.aabu.edu.jo')) {
+                  _emailController.text = '$currentText@st.aabu.edu.jo';
+                  _emailController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: _emailController.text.length),
+                  );
+                }
+              },
             ),
             const SizedBox(height: 12),
             CustomTextField(
@@ -172,6 +183,15 @@ class _SignupPageState extends State<SignupPage> {
             const SizedBox(height: 24),
 
             // ---------------- GENDER SELECTION ----------------
+            const Text(
+              "This can't be changed later!",
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

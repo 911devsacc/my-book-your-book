@@ -1,8 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:my_book_your_book/pages/auth/login_page.dart';
 import 'package:my_book_your_book/pages/auth/signup_page.dart';
 import 'package:my_book_your_book/pages/inside/bottom_navigation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:my_book_your_book/widgets/faculty_department_picker.dart';
-import '../constants/app_constants.dart';
+import 'package:flutter/material.dart';
 import '../widgets/app_form_fields.dart';
 
 class PostForm extends StatefulWidget {
@@ -99,27 +98,22 @@ class _PostFormState extends State<PostForm> {
             },
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: RadioListTile<String>(
+           RadioListTile<String>(
                   title: const Text("For Free"),
                   value: "free",
                   groupValue: _exchangeType,
                   activeColor: Colors.green,
                   onChanged: (value) => setState(() => _exchangeType = value!),
                 ),
-              ),
-              Expanded(
-                child: RadioListTile<String>(
+               RadioListTile<String>(
                   title: const Text("In Exchange"),
                   value: "exchange",
                   groupValue: _exchangeType,
                   activeColor: Colors.green,
                   onChanged: (value) => setState(() => _exchangeType = value!),
-                ),
-              ),
-            ],
+                
+              
+            
           ),
           if (_exchangeType == "exchange") ...[
             const SizedBox(height: 8),

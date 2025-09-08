@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:my_book_your_book/pages/auth/validators.dart';
 import 'package:my_book_your_book/widgets/custom_textfield.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -130,6 +131,16 @@ class _LoginPageState extends State<LoginPage> {
               controller: _emailController,
               labelText: 'Email',
               validator: Validators.email,
+              showDomainButton: true,
+              onDomainPressed: () {
+                final currentText = _emailController.text.trim();
+                if (!currentText.endsWith('@st.aabu.edu.jo')) {
+                  _emailController.text = '$currentText@st.aabu.edu.jo';
+                  _emailController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: _emailController.text.length),
+                  );
+                }
+              },
             ),
             const SizedBox(height: 12),
             CustomTextField(

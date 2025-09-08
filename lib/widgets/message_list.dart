@@ -1,7 +1,7 @@
+import 'package:my_book_your_book/widgets/message_bubble.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:my_book_your_book/widgets/message_bubble.dart';
 
 class MessageList extends StatefulWidget {
   final List<QueryDocumentSnapshot> messages;

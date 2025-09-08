@@ -6,6 +6,8 @@ class CustomTextField extends StatefulWidget {
   final bool isPassword;
   final String? Function(String?)? validator;
   final Widget? suffixIcon;
+  final bool showDomainButton;
+  final VoidCallback? onDomainPressed;
 
   const CustomTextField({
     super.key,
@@ -14,6 +16,8 @@ class CustomTextField extends StatefulWidget {
     this.isPassword = false,
     this.validator,
     this.suffixIcon,
+    this.showDomainButton = false,
+    this.onDomainPressed,
   });
 
   @override
@@ -37,7 +41,24 @@ class _CustomTextFieldState extends State<CustomTextField> {
           borderSide: const BorderSide(color: Colors.green, width: 2),
           borderRadius: BorderRadius.circular(8),
         ),
-        suffixIcon: widget.suffixIcon,
+        suffixIcon: widget.showDomainButton
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    onPressed: widget.onDomainPressed,
+                    child: const Text(
+                      "@st.aabu.edu.jo",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
+                  if (widget.suffixIcon != null) widget.suffixIcon!,
+                ],
+              )
+            : widget.suffixIcon,
       ),
     );
   }
